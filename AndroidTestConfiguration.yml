@@ -1,0 +1,119 @@
+version: 0.1
+
+# Phases are collection of commands that get executed on Device Farm.
+phases:
+  # The install phase includes commands that install dependencies that your tests use.
+  # Default dependencies for testing frameworks supported on Device Farm are already installed.
+  install:
+    commands:
+     
+      - echo "Navigate to test package directory"
+      - cd $DEVICEFARM_TEST_PACKAGE_PATH
+      - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+      - chmod +x ./dotnet-install.sh
+      - ./dotnet-install.sh --channel 6.0
+      - export PATH="$PATH:$HOME/.dotnet"
+      - dotnet --version
+      - dotnet add package NUnit --version 3.13.3
+      - dotnet add package AltTester-Driver --version 2.0.1
+      - dotnet add package Selenium.WebDriver --version 3.141.0
+      - dotnet add package NUnit3TestAdapter --version 4.4.2
+      
+      # Use a pre-configured ruby environment to run your tests.
+      # This environment has the following gems pre-installed (appium_lib (9.16.1), test-unit (3.2.9)) along with their dependencies.
+      # If you are using this env, please make sure you do not upload the Gemfile.lock while packaging your tests.
+      # If the Gemfile.lock contains different versions for the already installed packages, it will ignore the pre-installed packages.
+      # Using this env can help you speed up your test set up phase as you wont have to install all the gems.
+      # This default env is only available for ruby 2.5.3.
+      - rvm gemset use default-ruby-gemset-env-version-1 --create
+      # Alternatively, you can create a new virtual ruby env using the command:
+      #- rvm gemset use env --create
+
+      # Install the gems from the local vendor/cache directory
+      - bundle install --local
+      # Optional command to install gems from the internet if not all the gems were packaged in vendor/cache directory.
+      - bundle install
+
+      # The Appium server is written using Node.js. In order to run your desired version of Appium, you first need to
+      # set up a Node.js environment that is compatible with your version of Appium.
+      # This test execution environment uses Node.js version 10.14.0 by default, however we enable you to change it
+      # using the Node version manager (nvm). An example "nvm" command below changes the version to 14.19.1
+      - export NVM_DIR=$HOME/.nvm
+      - . $NVM_DIR/nvm.sh
+      - nvm install 14.19.1
+
+      # This test execution environment uses Appium version 1.9.1 by default, however we enable you to change it using
+      # the Appium version manager (avm). An example "avm" command below changes the version to 1.22.2.
+      # For your convenience, we have preinstalled the following versions: 1.22.2, 1.19.0, 1.18.3, 1.18.1, 1.18.0, 1.17.1, 1.16.0, 1.15.1, 1.14.2, 1.14.1, and 1.13.0.
+      # To use one of these Appium versions, change the version number in the "avm" command below to your desired version:
+
+      - export APPIUM_VERSION=1.22.2
+      - avm $APPIUM_VERSION
+      - ln -s /usr/local/avm/versions/$APPIUM_VERSION/node_modules/.bin/appium  /usr/local/avm/versions/$APPIUM_VERSION/node_modules/appium/bin/appium.js
+
+  # The pre-test phase includes commands that setup your test environment.
+  pre_test:
+    commands:
+      # We recommend starting appium server process in the background using the command below.
+      # Appium server log will go to $DEVICEFARM_LOG_DIR directory.
+      # The environment variables below will be auto-populated during run time.
+
+      # Device Farm devices vary in what versions of Chrome and WebView they have.
+      # By default, this test spec file will enable Appium to download the corresponding versions of Chromedriver from https://chromedriver.storage.googleapis.com/
+      # To override this behavior, feel free to set the CHROMEDRIVER_CDNURL environment variable to another CDN. For example:
+      # - export CHROMEDRIVER_CDNURL=https://chromedriver.storage.googleapis.com
+      # For more information, please see https://github.com/appium/appium-uiautomator2-driver#troubleshooting-chromedriver-download-issues
+      # Moreover, Appium downloads Chromedriver using a feature that is considered insecure for multitenant environments.
+      # This is not a problem for Device Farm because each test host is allocated exclusively for one customer, then terminated entirely.
+      # For more information, please see https://github.com/appium/appium/blob/master/packages/appium/docs/en/guides/security.md
+
+      - echo "Start appium server"
+      - >-
+        appium --log-timestamp --allow-insecure chromedriver_autodownload
+        --default-capabilities "{\"deviceName\": \"$DEVICEFARM_DEVICE_NAME\", \"platformName\":\"$DEVICEFARM_DEVICE_PLATFORM_NAME\",
+        \"app\":\"$DEVICEFARM_APP_PATH\", \"udid\":\"$DEVICEFARM_DEVICE_UDID\", \"platformVersion\":\"$DEVICEFARM_DEVICE_OS_VERSION\",
+        \"chromedriverExecutableDir\":\"$DEVICEFARM_CHROMEDRIVER_EXECUTABLE_DIR\"}"
+        >> $DEVICEFARM_LOG_DIR/appiumlog.txt 2>&1 &
+
+      - >-
+        start_appium_timeout=0;
+        while [ true ];
+        do
+            if [ $start_appium_timeout -gt 60 ];
+            then
+                echo "appium server never started in 60 seconds. Exiting";
+                exit 1;
+            fi;
+            grep -i "Appium REST http interface listener started on 0.0.0.0:4723" $DEVICEFARM_LOG_DIR/appiumlog.txt >> /dev/null 2>&1;
+            if [ $? -eq 0 ];
+            then
+                echo "Appium REST http interface listener started on 0.0.0.0:4723";
+                break;
+            else
+                echo "Waiting for appium server to start. Sleeping for 1 second";
+                sleep 1;
+                start_appium_timeout=$((start_appium_timeout+1));
+            fi;
+        done;
+
+  # The test phase includes commands that start your test suite execution.
+  test:
+    commands:
+      # Your test package is downloaded in $DEVICEFARM_TEST_PACKAGE_PATH so we first change directory to that path.
+      - echo "Navigate to test source code"
+      - cd $DEVICEFARM_TEST_PACKAGE_PATH
+      - echo "Start Appium test"
+      - adb reverse tcp:13000 tcp:13000
+      - dotnet test --filter=MainMenuTests.TestMainMenuPageLoadedCorrectly
+
+
+  # The post test phase includes are commands that are run after your tests are executed.
+  post_test:
+    commands:
+
+# The artifacts phase lets you specify the location where your tests logs, device logs will be stored.
+# And also let you specify the location of your test logs and artifacts which you want to be collected by Device Farm.
+# These logs and artifacts will be available through ListArtifacts API in Device Farm.
+artifacts:
+  # By default, Device Farm will collect your artifacts from following directories
+  - $DEVICEFARM_LOG_DIR
