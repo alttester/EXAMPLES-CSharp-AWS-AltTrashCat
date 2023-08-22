@@ -1,0 +1,1 @@
+# EXAMPLES-CSharp-AWS-AltTrashCat
