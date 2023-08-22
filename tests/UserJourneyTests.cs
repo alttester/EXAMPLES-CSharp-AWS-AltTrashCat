@@ -18,7 +18,8 @@ namespace alttrashcat_tests_csharp.tests
         [SetUp]
         public void Setup()
         {
-            altDriver = new AltDriver(port:13000, host:"52.59.13.72");
+            //altDriver = new AltDriver(port:13000, host:"52.59.13.72");
+            altDriver = new AltDriver();
             mainMenuPage = new MainMenuPage(altDriver);
             gamePlay = new GamePlay(altDriver);
             pauseOverlayPage = new PauseOverlayPage(altDriver);

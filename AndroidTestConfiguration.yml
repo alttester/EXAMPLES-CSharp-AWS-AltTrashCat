@@ -9,11 +9,11 @@ phases:
      
       - echo "Navigate to test package directory"
       - cd $DEVICEFARM_TEST_PACKAGE_PATH
-      - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+      - curl -O -L https://dot.net/v1/dotnet-install.sh
       - chmod +x ./dotnet-install.sh
-      - ./dotnet-install.sh --channel 6.0
-      - export PATH="$PATH:$HOME/.dotnet"
-      - dotnet --version
+      - bash ./dotnet-install.sh --channel 6.0
+      - export PATH=$PATH:$HOME/.dotnet
+      - dotnet -- version
       - dotnet add package NUnit --version 3.13.3
       - dotnet add package AltTester-Driver --version 2.0.1
       - dotnet add package Selenium.WebDriver --version 3.141.0
@@ -103,7 +103,6 @@ phases:
       - echo "Navigate to test source code"
       - cd $DEVICEFARM_TEST_PACKAGE_PATH
       - echo "Start Appium test"
-      - adb reverse tcp:13000 tcp:13000
       - dotnet test --filter=MainMenuTests.TestMainMenuPageLoadedCorrectly
 
 

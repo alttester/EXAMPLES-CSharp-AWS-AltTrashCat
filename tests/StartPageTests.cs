@@ -9,7 +9,8 @@ namespace alttrashcat_tests_csharp.tests
         [SetUp]
         public void Setup()
         {   
-            altDriver = new AltDriver(port:13000, host:"52.59.13.72");
+            //altDriver = new AltDriver(port:13000, host:"52.59.13.72");
+            altDriver = new AltDriver();
             startPage = new StartPage(altDriver);
             startPage.Load();
             mainMenuPage = new MainMenuPage(altDriver);
