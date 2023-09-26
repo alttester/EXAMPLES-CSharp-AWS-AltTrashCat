@@ -3,15 +3,13 @@ namespace alttrashcat_tests_csharp.tests
 {
     public class StoreTests: BaseTest
     {
-        AltDriver altDriver;
         StorePage storePage;
         MainMenuPage mainMenuPage;
         SettingsPage settingsPage;
         [SetUp]
         public void Setup()
         {
-            //altDriver = new AltDriver(port:13000, host:"52.59.13.72");
-            altDriver = new AltDriver();
+
             storePage = new StorePage(altDriver);
             storePage.LoadScene();
             mainMenuPage = new MainMenuPage(altDriver);
@@ -207,7 +205,6 @@ namespace alttrashcat_tests_csharp.tests
         {
             mainMenuPage.LoadScene();
             settingsPage.DeleteData();
-            altDriver.Stop();
             Thread.Sleep(1000);
         }
 

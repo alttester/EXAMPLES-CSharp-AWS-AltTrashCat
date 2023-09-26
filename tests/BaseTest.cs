@@ -7,6 +7,7 @@ namespace alttrashcat_tests_csharp.tests
 {
     public class BaseTest
     {
+       public AltDriver altDriver;
        AndroidDriver<AndroidElement> appiumDriver;
        //IOSDriver<IOSElement> appiumDriver;
 
@@ -33,12 +34,15 @@ namespace alttrashcat_tests_csharp.tests
             appiumDriver = new AndroidDriver<AndroidElement>(appiumUri, capabilities, TimeSpan.FromSeconds(300));
             Thread.Sleep(30000);
             Console.WriteLine("Appium driver started");
+            altDriver = new AltDriver();
+            Console.WriteLine("AltDriver started");
         }
 
         [OneTimeTearDown]
         public void DisposeAppium()
         {
             Console.WriteLine("Ending");
+            altDriver.Stop();
             appiumDriver.Quit();
         }
 
