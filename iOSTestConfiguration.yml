@@ -83,7 +83,7 @@ phases:
       - export PATH=$PATH:$HOME/.dotnet
       - dotnet --version
       - dotnet add package NUnit --version 3.13.3
-      - dotnet add package AltTester-Driver --version 2.0.1
+      - dotnet add package AltTester-Driver --version 2.2.5
       - dotnet add package Selenium.WebDriver --version 3.141.0
       - dotnet add package NUnit3TestAdapter --version 4.4.2
 
